@@ -24,6 +24,8 @@ import argparse
 import logging
 import sys
 
+from prompt_toolkit import PromptSession
+
 from cli_text_search import __version__
 
 __author__ = "marc"
@@ -34,26 +36,6 @@ _logger = logging.getLogger(__name__)
 
 
 # ---- Python API ----
-# The functions defined in this section can be imported by users in their
-# Python scripts/interactive interpreter, e.g. via
-# `from cli_text_search.skeleton import fib`,
-# when using this Python module as a library.
-
-
-def fib(n):
-    """Fibonacci example function
-
-    Args:
-      n (int): integer
-
-    Returns:
-      int: n-th Fibonacci number
-    """
-    assert n > 0
-    a, b = 1, 1
-    for _i in range(n - 1):
-        a, b = b, a + b
-    return a
 
 
 # ---- CLI ----
@@ -72,13 +54,13 @@ def parse_args(args):
     Returns:
       :obj:`argparse.Namespace`: command line parameters namespace
     """
-    parser = argparse.ArgumentParser(description="Just a Fibonacci demonstration")
+    parser = argparse.ArgumentParser(description="command line text search")
     parser.add_argument(
         "--version",
         action="version",
         version="cli_text_search {ver}".format(ver=__version__),
     )
-    parser.add_argument(dest="n", help="n-th Fibonacci number", type=int, metavar="INT")
+    parser.add_argument(dest="directory", help="root directory for text corpus", type=str, metavar="INT")
     parser.add_argument(
         "-v",
         "--verbose",
@@ -127,23 +109,17 @@ def main(args):
     _logger.info("Script ends here")
 
 
-def run():
-    """Calls :func:`main` passing the CLI arguments extracted from :obj:`sys.argv`
+def invoke_prompt(folder_path):
+    # TODO: user folder_path
+    s = PromptSession(message='search> ')
+    while True:
+        answer = s.prompt()
+        # TODO: insert your implementation here
 
-    This function can be used as entry point to create console scripts with setuptools.
-    """
-    main(sys.argv[1:])
 
-
-if __name__ == "__main__":
-    # ^  This is a guard statement that will prevent the following code from
-    #    being executed in the case someone imports this file instead of
-    #    executing it as a script.
-    #    https://docs.python.org/3/library/__main__.html
-
-    # After installing your project with pip, users can also run your Python
-    # modules as scripts via the ``-m`` flag, as defined in PEP 338::
-    #
-    #     python -m cli_text_search.skeleton 42
-    #
-    run()
+if __name__ == '__main__':
+    f = sys.argv[1] if len(sys.argv) > 1 else None
+    if f:
+        invoke_prompt(f)
+    else:
+        raise Exception('Missing parameter: folder_path')
