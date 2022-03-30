@@ -1,9 +1,9 @@
 .. These are examples of badges you might want to add to your README:
    please update the URLs accordingly
 
-    .. image:: https://api.cirrus-ci.com/github/<USER>/cli_text_search.svg?branch=main
+    .. image:: https://api.cirrus-ci.com/github/marc-wagner/cli_text_search.svg?branch=main
         :alt: Built Status
-        :target: https://cirrus-ci.com/github/<USER>/cli_text_search
+        :target: https://cirrus-ci.com/github/marc-wagner/cli_text_search
     .. image:: https://readthedocs.org/projects/cli_text_search/badge/?version=latest
         :alt: ReadTheDocs
         :target: https://cli_text_search.readthedocs.io/en/stable/
@@ -27,18 +27,29 @@
     :alt: Project generated with PyScaffold
     :target: https://pyscaffold.org/
 
-|
-
 ===============
 cli_text_search
 ===============
 
 
-    command line text search
+    search for words in a collection of text documents using command line
 
 
-A longer description of your project goes here...
+this program is a bare-bones text search engine for text files.
 
+===
+Use
+===
+
+.. code:: bash
+   > python main.py <document_directory>
+
+   > [CTRL+C] to exit
+
+Relevance Scoring
+-----------------
+
+Score is calculated on the occurrence of search words, irrelevant of their frequency of occurrence
 
 .. _pyscaffold-notes:
 

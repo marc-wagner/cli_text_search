@@ -1,8 +1,10 @@
 import logging
 import os
 import sys
-
+from IPython.display import display
 from prompt_toolkit import PromptSession
+
+from src.cli_text_search.corpus import Corpus
 
 logger = logging.getLogger(__name__)
 logformat = "[%(asctime)s] %(levelname)s:%(name)s:%(message)s"
@@ -12,16 +14,24 @@ logging.basicConfig(level="DEBUG",
                     datefmt="%Y-%m-%d %H:%M:%S")
 
 
+
+
+def tokenize(sentence):
+    sentence.lower()
+    return
+
+
 # ---- Python API ----
-def collect_files(directory):
-    text_files = []
+def collect_file_paths(directory):
+    text_file_paths = []
     for dirpath, dirnames, files in os.walk(directory):
         for name in files:
             file_path = os.path.join(dirpath, name)
             logger.debug(f"found file {file_path}")
-            text_files.append((name, file_path))
+            # TODO discard binary files, read all other
+            text_file_paths.append(file_path)
 
-    return text_files
+    return text_file_paths
 
 
 def invoke_prompt(folder_path):
@@ -29,13 +39,13 @@ def invoke_prompt(folder_path):
     load corpus for search
     and prompt for search term
     """
-    # TODO: user folder_path
     logger.info(f"input path: {folder_path}")
 
-    documents = collect_files(folder_path)
+    file_paths = collect_file_paths(folder_path)
     # TODO generate metadata for each file
+    corpus = Corpus(file_paths)
     # TODO asynch for metadata
-
+    display(corpus.df_dtm)
 
     s = PromptSession(message='search> ')
     while True:
@@ -43,11 +53,11 @@ def invoke_prompt(folder_path):
             logger.info(f"starting interactive user prompt")
             answer = s.prompt()
 
-            # TODO: insert your implementation here
-            logger.info(f"searching best match for {answer} in {len(documents)} documents")
-            ranked_documents = ranked_search(answer, documents)
+            logger.info(f"searching best match for {answer} in {len(corpus.documents)} documents")
+            ranked_documents = corpus.get_best_match(word=answer, max_rank=10)
         except LookupError:
             logger.error(f"lookup error for search term {answer}")
+
 
 # ---- CLI ----
 def main(argv):

@@ -9,9 +9,14 @@ class Document:
         self.path = path
         self.name = name
 
-    def build_index(self):
+    def assign_weights(self):
         """
-        index word occurrence
+
+        """
+
+    def build_dictionary(self):
+        """
+        index words
         """
         pass
 
