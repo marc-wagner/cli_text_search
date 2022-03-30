@@ -1,4 +1,5 @@
 import logging
+import os
 import sys
 
 from prompt_toolkit import PromptSession
@@ -10,26 +11,48 @@ logging.basicConfig(level="DEBUG",
                     format=logformat,
                     datefmt="%Y-%m-%d %H:%M:%S")
 
+
 # ---- Python API ----
+def collect_files(directory):
+    text_files = []
+    for dirpath, dirnames, files in os.walk(directory):
+        for name in files:
+            file_path = os.path.join(dirpath, name)
+            logger.debug(f"found file {file_path}")
+            text_files.append((name, file_path))
+
+    return text_files
 
 
-# ---- CLI ----
 def invoke_prompt(folder_path):
+    """
+    load corpus for search
+    and prompt for search term
+    """
     # TODO: user folder_path
     logger.info(f"input path: {folder_path}")
 
-    # TO DO handle cases with multiple subdirectories
+    documents = collect_files(folder_path)
+    # TODO generate metadata for each file
+    # TODO asynch for metadata
 
-    # TO DO generate metadata for each file
 
     s = PromptSession(message='search> ')
     while True:
-        logger.info(f"starting interactive user prompt")
-        answer = s.prompt()
-        # TODO: insert your implementation here
+        try:
+            logger.info(f"starting interactive user prompt")
+            answer = s.prompt()
 
+            # TODO: insert your implementation here
+            logger.info(f"searching best match for {answer} in {len(documents)} documents")
+            ranked_documents = ranked_search(answer, documents)
+        except LookupError:
+            logger.error(f"lookup error for search term {answer}")
 
+# ---- CLI ----
 def main(argv):
+    # assuming only 1 path is provided
+    # TODO validate 1 path assumption
     f = argv[1] if len(argv) > 1 else None
     if f:
         invoke_prompt(f)
