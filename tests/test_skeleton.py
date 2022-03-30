@@ -1,6 +1,6 @@
 import pytest
 
-from cli_text_search.skeleton import fib, main
+from cli_text_search.skeleton import main
 
 __author__ = "marc"
 __copyright__ = "marc"
@@ -20,6 +20,14 @@ def test_main(capsys):
     """CLI Tests"""
     # capsys is a pytest fixture that allows asserts agains stdout/stderr
     # https://docs.pytest.org/en/stable/capture.html
-    main(["7"])
+    main(["./"])
     captured = capsys.readouterr()
-    assert "The 7-th Fibonacci number is 13" in captured.out
+    assert "skeleton.py" in captured.out
+
+
+def test_invoke_prompt():
+    assert False
+
+
+def test_main():
+    assert False

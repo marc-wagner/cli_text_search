@@ -5,9 +5,11 @@ name = "pypi"
 
 [packages]
 prompt-toolkit = "*"
-pytest = "*"
 
 [dev-packages]
+setuptools = "*"
+pytest = "*"
+pytest-cov = "*"
 
 [requires]
 python_version = "3.8"
