@@ -51,10 +51,10 @@ def invoke_prompt(folder_path):
     while True:
         try:
             logger.info(f"starting interactive user prompt")
-            answer = s.prompt()
+            answer = "purpose"  # s.prompt()
 
             logger.info(f"searching best match for {answer} in {len(corpus.documents)} documents")
-            ranked_documents = corpus.get_best_match(word=answer, max_rank=10)
+            ranked_documents = corpus.get_best_match(search_term=answer, max_rank=10)
         except LookupError:
             logger.error(f"lookup error for search term {answer}")
 
