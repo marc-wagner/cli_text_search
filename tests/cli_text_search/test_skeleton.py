@@ -1,19 +1,12 @@
 import pytest
+import importlib
+import sys
 
-from cli_text_search.skeleton import main
+from cli_text_search import skeleton
 
 __author__ = "marc"
 __copyright__ = "marc"
 __license__ = "MIT"
-
-
-def test_fib():
-    """API Tests"""
-    assert fib(1) == 1
-    assert fib(2) == 1
-    assert fib(7) == 13
-    with pytest.raises(AssertionError):
-        fib(-10)
 
 
 def test_main(capsys):

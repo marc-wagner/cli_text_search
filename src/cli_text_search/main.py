@@ -3,7 +3,7 @@ import sys
 
 from prompt_toolkit import PromptSession
 
-_logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 logformat = "[%(asctime)s] %(levelname)s:%(name)s:%(message)s"
 logging.basicConfig(level="DEBUG",
                     stream=sys.stdout,
@@ -16,9 +16,15 @@ logging.basicConfig(level="DEBUG",
 # ---- CLI ----
 def invoke_prompt(folder_path):
     # TODO: user folder_path
-    print(f"input path: {folder_path}")
+    logger.info(f"input path: {folder_path}")
+
+    # TO DO handle cases with multiple subdirectories
+
+    # TO DO generate metadata for each file
+
     s = PromptSession(message='search> ')
     while True:
+        logger.info(f"starting interactive user prompt")
         answer = s.prompt()
         # TODO: insert your implementation here
 
