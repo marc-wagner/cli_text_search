@@ -15,6 +15,7 @@ class Corpus:
         self.documents = document_paths
 
         texts = []
+        # TODO find best way to read fault tolerant
         for path in document_paths:
             try:
                 text_file = open(path, "r")
@@ -22,11 +23,12 @@ class Corpus:
             finally:
                 text_file.close()
 
-        columns = ['document_path', 'text']
-        df = pd.DataFrame({'document_path': document_paths, 'text': texts})
+        #columns = ['document_path', 'text']
+        #df = pd.DataFrame({'document_path': document_paths, 'text': texts})
 
         self.vectorizer = CountVectorizer()  # not using any stop_words : not filtering out any words > 2 chars
-        self.n_gram_matrix = self.vectorizer.fit_transform(df['text'])
+        #self.n_gram_matrix = self.vectorizer.fit_transform(df['text'])
+        self.n_gram_matrix = self.vectorizer.fit_transform(texts)
         logging.info(f"corpus document term matrix shape: {self.get_document_term_matrix().shape}")
         logging.debug(f"corpus dictionary: {self.get_dictionary()}")
 
@@ -43,22 +45,45 @@ class Corpus:
 
     def get_best_match(self, search_term, max_rank=1):
 
+        logging.info(f"searching best match for {search_term} in {len(self.documents)} documents")
         score = []
         input_search_term = [search_term]  # instantiate empty list of strings
         search_term_ngram = self.vectorizer.transform(input_search_term)
-        zero_array = np.zeros(search_term_ngram.shape, dtype=search_term_ngram.dtype)
-        target = search_term_ngram.toarray().sum()
+        # TODO debug why ceil_1 fails when floor_0 works OK
+        # norm_search_term_ngram = self.apply_ceil_ones(search_term_ngram)
+        norm_search_term_ngram = search_term_ngram
+
+        target = norm_search_term_ngram.toarray().sum()
 
         logging.debug(f"built ngram for '{search_term}' : {target} tokens in {type(search_term_ngram)}")
 
         for i in range(0, len(self.documents)):
-            diff_negatives = search_term_ngram - self.n_gram_matrix[i, :]
-            diff_coverage = np.maximum(diff_negatives.toarray(), zero_array)
+            diff_negatives = norm_search_term_ngram - self.n_gram_matrix[i, :]
+
+            diff_coverage = self.apply_floor_zero(diff_negatives, search_term_ngram)
 
             logging.debug(f"diff coverage array: {diff_coverage} of type {type(diff_coverage)}")
-            score.append([1-diff_coverage.sum()/target, self.documents[i]])
-#           score.append((i, np.linalg.norm( search_term_ngram, self.n_gram_matrix[i, :])))
+            sum_coverage = 1-diff_coverage.sum()/target
+            if sum_coverage > 0:
+                score.append([sum_coverage, self.documents[i]])
+            #   score.append((i, np.linalg.norm( search_term_ngram, self.n_gram_matrix[i, :])))
+            if len(score) == max_rank:
+                break
         score.sort(key=lambda x: x[0], reverse=True)
         nr_results = min(max_rank, len(score))
         logging.info(f"returning {nr_results} best matches")
         return score[0: nr_results]
+
+    @staticmethod
+    def apply_floor_zero(diff_negatives):
+        zero_array = np.zeros(diff_negatives.shape, dtype=diff_negatives.dtype)
+        diff_coverage = np.maximum(diff_negatives.toarray(), zero_array)
+        return diff_coverage
+
+    @staticmethod
+    def apply_ceil_ones(matrix):
+        """remove duplicate words
+        required in order to score more accurately"""
+        ones_array = np.ones(matrix.shape, dtype=matrix.dtype)
+        ceil_matrix = np.minimum(matrix, ones_array) /
+        return ceil_matrix
