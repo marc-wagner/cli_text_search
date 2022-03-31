@@ -39,8 +39,9 @@ class Corpus:
         #     raise("could not write to temporary file tmp/search_term")
 
         score = []
+        vectorized_search_term = self.vectorizer.transform( .toarray().reshape(df.shape[0], )
         for i in range(1 , len(self.documents)):
-            score.append((i,np.linalg.norm(self.n_gram_matrix[i+1, :], self.n_gram_matrix[i, :])))
+            score.append((i, np.linalg.norm(self.n_gram_matrix[i+1, :], self.n_gram_matrix[i, :])))
 
 
         score.sort(lambda x : x[2])
