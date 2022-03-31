@@ -8,55 +8,88 @@ import logging
 
 
 class Corpus:
+    """
+    a corpus is a collection of documents
+    that can be searched for word occurrences
+    or via a dictionary
 
-    def __init__(self, document_paths):
+    the class uses scikit learn to vectorize text as bag-of-words n-gram with n=1 and does not use stop words.
+    this means that 1-letter words like "I", "a" or abbreviated words like "'s" are ignored for scoring
 
-        self.documents = document_paths  # required to extract row labels from sparse matrix
+    The score of a document for a search is determined by its coverage:
+    if all search words are present, the score is is a good match for the The score that is returned
+    """
+
+    def __init__(self, input, input_type="string"):
+        """
+        constructor ban be overloaded with a list of strings or with a list of filepaths
+        """
+        if input_type == "string":
+            texts = input
+        else:
+            if input_type == "filepath":
+                texts = self.load_texts(input)
+            else:
+                raise SyntaxError("input_type should be 'string' or 'filepath'")
+        self.documents = input  # required to extract row labels from sparse matrix
         self.vectorizer = CountVectorizer()  # not using any stop_words : not filtering out any words > 2 chars
-        self.n_gram_matrix = self.vectorizer.fit_transform(self.load_texts(document_paths))  # requires all documents in memory
+        self.n_gram_matrix = self.vectorizer.fit_transform(texts)  # requires all documents in memory
         # TODO make scale out with this:
         # https://scikit-learn.org/stable/auto_examples/applications/plot_out_of_core_classification.html#sphx-glr-auto-examples-applications-plot-out-of-core-classification-py
 
-        logging.info(f"corpus document term matrix shape: {self.get_document_term_matrix().shape}")
-        logging.debug(f"corpus dictionary: {self.get_dictionary()}")
+        logging.info(f"document term matrix shape: {self.get_document_term_matrix().shape}")
+        logging.debug(f"dictionary: {self.get_dictionary()}")
 
     def get_document_term_matrix(self):
-        """ view matrix in human readable form with
-        row headers = document path and column headers = words in document"""
+        """
+        view matrix in human readable form with
+        row headers = document path and column headers = words in document
+        """
         return pd.DataFrame(data=self.n_gram_matrix.toarray(),
                             index=np.array(self.documents),
                             columns=self.vectorizer.get_feature_names_out())
 
     def get_dictionary(self):
-        """ return dictionary of corpus """
+        """
+        return dictionary of corpus
+        """
         return self.vectorizer.get_feature_names_out()
 
-    def get_best_match(self, search_term, max_rank=1):
+    def get_tokens_in_document(self, search_ngram, document_index):
+        """
+        return the number of tokens that were not found
+        """
+        initial_token_count = search_ngram.sum()
+        diff_negatives = search_ngram - self.n_gram_matrix[document_index, :]
+        tokens_not_found = self.apply_floor_zero(diff_negatives)
+        return initial_token_count - tokens_not_found.sum()
 
-        logging.info(f"searching best match for {search_term} in {len(self.documents)} documents")
+    def get_best_match(self, search_term, max_rank=1):
+        """
+        search for string in loaded all documents
+
+        params:
+        search_term: a sentence to be separated into words
+
+
+        """
+        logging.info(f"searching for '{search_term}' in :{len(self.documents)} documents")
         score = []
         input_search_term = [search_term]  # instantiate empty list of strings
-        search_term_ngram = self.vectorizer.transform(input_search_term)
-        # TODO debug why ceil_1 fails when floor_0 works OK
-        # norm_search_term_ngram = self.apply_ceil_ones(search_term_ngram)
-        norm_search_term_ngram = search_term_ngram
+        search_term_ngram = self.vectorizer.transform(input_search_term)  #vectorize against CORPUS dictionary
 
-        target = norm_search_term_ngram.toarray().sum()
+        if search_term_ngram.sum() == 0:  #no part of the search term is in the corpus
+            return score
 
-        logging.debug(f"built ngram for '{search_term}' : {target} tokens in {type(search_term_ngram)}")
+        for i in range(0, len(self.documents)):  # search in each document's dictionary
 
-        for i in range(0, len(self.documents)):
-            diff_negatives = norm_search_term_ngram - self.n_gram_matrix[i, :]
+            nr_tokens_found = self.get_tokens_in_document(search_term_ngram, i)
+            logging.debug(f"found {nr_tokens_found} token(s) in {self.documents[i]}")
+            document_score = [nr_tokens_found, self.documents[i]]
 
-            diff_coverage = self.apply_floor_zero(diff_negatives)
+            if nr_tokens_found > 0:
+                score.append([nr_tokens_found, self.documents[i]])
 
-            logging.debug(f"diff coverage array: {diff_coverage} of type {type(diff_coverage)}")
-            sum_coverage = 1-diff_coverage.sum()/target
-            if sum_coverage > 0:
-                score.append([sum_coverage, self.documents[i]])
-            #   score.append((i, np.linalg.norm( search_term_ngram, self.n_gram_matrix[i, :])))
-            if len(score) == max_rank:
-                break
         score.sort(key=lambda x: x[0], reverse=True)
         nr_results = min(max_rank, len(score))
         logging.info(f"returning {nr_results} best matches")
@@ -64,18 +97,13 @@ class Corpus:
 
     @staticmethod
     def apply_floor_zero(diff_negatives):
+        """
+        whether a word shows up once or many times in a document doesn't matter,
+        the score stays the same
+        """
         zero_array = np.zeros(diff_negatives.shape, dtype=diff_negatives.dtype)
         diff_coverage = np.maximum(diff_negatives.toarray(), zero_array)
         return diff_coverage
-
-    @staticmethod
-    def apply_ceil_ones(matrix):
-        """remove duplicate words
-        required in order to score more accurately"""
-        ones_array = np.ones(matrix.shape, dtype=matrix.dtype)
-        # TODO debug why ceil_1 fails when floor_0 works OK
-        ceil_matrix = np.minimum(matrix, ones_array)
-        return ceil_matrix
 
     @staticmethod
     def load_texts(document_paths):

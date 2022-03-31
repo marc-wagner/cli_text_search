@@ -1,7 +1,6 @@
 import logging
 import os
 import sys
-from IPython.display import display
 from prompt_toolkit import PromptSession
 
 from cli_text_search.corpus import Corpus
@@ -12,6 +11,7 @@ logging.basicConfig(level="DEBUG",
                     format=logformat,
                     datefmt="%Y-%m-%d %H:%M:%S")
 
+max_results = 10  # max number of results returned
 
 # ---- Python API ----
 def collect_file_paths(directory):
@@ -27,37 +27,46 @@ def collect_file_paths(directory):
 
 def invoke_prompt(folder_path):
     """
-    load corpus for search
-    and prompt for search term
+    manage program workflow:
+        first load corpus for search
+        then loop: prompt for search term, show matching documents
+        until the user types 'quit'
     """
     logging.info(f"input path: {folder_path}")
 
     file_paths = collect_file_paths(folder_path)
 
     # TODO make this asynch
-    corpus = Corpus(file_paths)
-
-    logging.info(f"finished loading corpus")
+    corpus = Corpus(file_paths, input_type="filepath")
 
     loop = True
     logging.info(f"starting interactive user prompt")
     s = PromptSession(message='search> ')
     while loop:
         try:
-            answer = "have you seen my dogs dogs dogs?"
-            #answer = s.prompt()
+            #answer = "have you seen my dogs dogs dogs?"
+            answer = s.prompt()
 
             if answer == "quit":
                 logging.info(f"user requested to quit program execution")
                 loop = False
             else:
-                # TODO vectorize search term to find tokens
-
-                document_score = corpus.get_best_match(search_term=answer, max_rank=10)
-                for result in document_score:
-                    print(f"{100.0 * result[0]}% : {result[1]}")
+                search(answer, corpus)
         except LookupError:
             logging.error(f"lookup error for search term '{answer}'")
+
+
+def search(answer, corpus):
+    """
+
+    """
+    search_tokens = Corpus([answer], input_type="string")
+    nr_tokens = len(search_tokens.get_dictionary())
+    logging.debug(f"number of (unique) tokens in search: {nr_tokens}")
+    tokens_as_string = ' '.join(search_tokens.get_dictionary().flatten())
+    document_score = corpus.get_best_match(search_term=tokens_as_string, max_rank=max_results)
+    for result in document_score:
+        print(f"{100.0 * result[0]/nr_tokens}% : {result[1]}")
 
 
 # ---- CLI ----
