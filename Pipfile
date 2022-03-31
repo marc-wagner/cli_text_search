@@ -8,6 +8,7 @@ prompt-toolkit = "*"
 scikit-learn = "*"
 pandas = "*"
 ipython = "*"
+matplotlib = "*"
 
 [dev-packages]
 setuptools = "*"

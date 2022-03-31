@@ -4,16 +4,13 @@ import sys
 from IPython.display import display
 from prompt_toolkit import PromptSession
 
-from src.cli_text_search.corpus import Corpus
+from cli_text_search.corpus import Corpus
 
-logger = logging.getLogger(__name__)
 logformat = "[%(asctime)s] %(levelname)s:%(name)s:%(message)s"
 logging.basicConfig(level="DEBUG",
                     stream=sys.stdout,
                     format=logformat,
                     datefmt="%Y-%m-%d %H:%M:%S")
-
-
 
 
 def tokenize(sentence):
@@ -27,7 +24,7 @@ def collect_file_paths(directory):
     for dirpath, dirnames, files in os.walk(directory):
         for name in files:
             file_path = os.path.join(dirpath, name)
-            logger.debug(f"found file {file_path}")
+            logging.debug(f"found file {file_path}")
             # TODO discard binary files, read all other
             text_file_paths.append(file_path)
 
@@ -39,24 +36,30 @@ def invoke_prompt(folder_path):
     load corpus for search
     and prompt for search term
     """
-    logger.info(f"input path: {folder_path}")
+    logging.info(f"input path: {folder_path}")
 
     file_paths = collect_file_paths(folder_path)
     # TODO generate metadata for each file
     corpus = Corpus(file_paths)
     # TODO asynch for metadata
-    display(corpus.df_dtm)
-
+    logging.info(f"finished loading corpus")
+    loop = True
     s = PromptSession(message='search> ')
-    while True:
+    while loop:
         try:
-            logger.info(f"starting interactive user prompt")
-            answer = "purpose"  # s.prompt()
+            logging.info(f"starting interactive user prompt")
+            answer = s.prompt()
 
-            logger.info(f"searching best match for {answer} in {len(corpus.documents)} documents")
-            ranked_documents = corpus.get_best_match(search_term=answer, max_rank=10)
+            if answer == "quit":
+                logging.info(f"user requested to quit program execution")
+                loop = False
+            else:
+                logging.info(f"searching best match for {answer} in {len(corpus.documents)} documents")
+                document_score = corpus.get_best_match(search_term=answer, max_rank=10)
+                for result in document_score:
+                    print(f"{100.0 * result[0]}% : {result[1]}")
         except LookupError:
-            logger.error(f"lookup error for search term {answer}")
+            logging.error(f"lookup error for search term '{answer}'")
 
 
 # ---- CLI ----
