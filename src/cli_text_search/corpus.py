@@ -8,39 +8,27 @@ import logging
 
 
 class Corpus:
-    df_dtm = pd.DataFrame()
 
     def __init__(self, document_paths):
-        # TODO check what attributes are really worth persisting in object model
-        self.documents = document_paths
 
-        texts = []
-        # TODO find best way to read fault tolerant
-        for path in document_paths:
-            try:
-                text_file = open(path, "r")
-                texts.append(text_file.read())
-            finally:
-                text_file.close()
-
-        #columns = ['document_path', 'text']
-        #df = pd.DataFrame({'document_path': document_paths, 'text': texts})
-
+        self.documents = document_paths  # required to extract row labels from sparse matrix
         self.vectorizer = CountVectorizer()  # not using any stop_words : not filtering out any words > 2 chars
-        #self.n_gram_matrix = self.vectorizer.fit_transform(df['text'])
-        self.n_gram_matrix = self.vectorizer.fit_transform(texts)
+        self.n_gram_matrix = self.vectorizer.fit_transform(self.load_texts(document_paths))  # requires all documents in memory
+        # TODO make scale out with this:
+        # https://scikit-learn.org/stable/auto_examples/applications/plot_out_of_core_classification.html#sphx-glr-auto-examples-applications-plot-out-of-core-classification-py
+
         logging.info(f"corpus document term matrix shape: {self.get_document_term_matrix().shape}")
         logging.debug(f"corpus dictionary: {self.get_dictionary()}")
 
-        # TODO make scaleable with this:
-        # https://scikit-learn.org/stable/auto_examples/applications/plot_out_of_core_classification.html#sphx-glr-auto-examples-applications-plot-out-of-core-classification-py
-
     def get_document_term_matrix(self):
+        """ view matrix in human readable form with
+        row headers = document path and column headers = words in document"""
         return pd.DataFrame(data=self.n_gram_matrix.toarray(),
                             index=np.array(self.documents),
                             columns=self.vectorizer.get_feature_names_out())
 
     def get_dictionary(self):
+        """ return dictionary of corpus """
         return self.vectorizer.get_feature_names_out()
 
     def get_best_match(self, search_term, max_rank=1):
@@ -60,7 +48,7 @@ class Corpus:
         for i in range(0, len(self.documents)):
             diff_negatives = norm_search_term_ngram - self.n_gram_matrix[i, :]
 
-            diff_coverage = self.apply_floor_zero(diff_negatives, search_term_ngram)
+            diff_coverage = self.apply_floor_zero(diff_negatives)
 
             logging.debug(f"diff coverage array: {diff_coverage} of type {type(diff_coverage)}")
             sum_coverage = 1-diff_coverage.sum()/target
@@ -85,5 +73,18 @@ class Corpus:
         """remove duplicate words
         required in order to score more accurately"""
         ones_array = np.ones(matrix.shape, dtype=matrix.dtype)
-        ceil_matrix = np.minimum(matrix, ones_array) /
+        # TODO debug why ceil_1 fails when floor_0 works OK
+        ceil_matrix = np.minimum(matrix, ones_array)
         return ceil_matrix
+
+    @staticmethod
+    def load_texts(document_paths):
+        texts = []
+        # TODO find best way to read fault tolerant
+        for path in document_paths:
+            try:
+                text_file = open(path, "r")
+                texts.append(text_file.read())
+            finally:
+                text_file.close()
+        return texts
