@@ -34,10 +34,12 @@ class DistributedCorpus(Corpus):
                 raise SyntaxError("input_type should be 'content' or 'filename'")
         self.documents = input  # required to extract row labels from sparse matrix
         self.vectorizer = HashingVectorizer(input="content",
-                                          stop_words=None,  # not filtering out any words > 2 chars
-                                          decode_error="ignore",
-                                          strip_accents="unicode",
-                                          lowercase=True)
+                                            stop_words=None,  # not filtering out any words > 2 chars
+                                            decode_error="ignore",
+                                            strip_accents="unicode",
+                                            lowercase=True,
+                                            n_features=2 ** 3,  # TODO reset this to 2 ** 18
+                                            alternate_sign=False)
         self.n_gram_matrix = self.vectorizer.fit_transform(texts)  # requires all documents in memory
 
 

@@ -87,7 +87,7 @@ def invoke_prompt(folder_path):
     while loop:
         try:
             #answer = s.prompt()
-            answer = "hello world"
+            answer = "search dogs"
             if answer == "quit":
                 logging.info(f"user requested to quit program execution")
                 loop = False
