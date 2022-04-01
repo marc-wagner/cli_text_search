@@ -20,19 +20,24 @@ class Corpus:
     if all search words are present, the score is is a good match for the The score that is returned
     """
 
-    def __init__(self, input, input_type="string"):
+    def __init__(self, input, input_type="content"):
         """
-        constructor ban be overloaded with a list of strings or with a list of filepaths
+        overload constructor with a list of strings (content) or with a list of absolute filenames
+        but build a consistent Vectorizer of input_type 'content' to handle both cases in search
         """
-        if input_type == "string":
+        if input_type == "content":
             texts = input
         else:
-            if input_type == "filepath":
+            if input_type == "filename":
                 texts = self.load_texts(input)
             else:
-                raise SyntaxError("input_type should be 'string' or 'filepath'")
+                raise SyntaxError("input_type should be 'content' or 'filename'")
         self.documents = input  # required to extract row labels from sparse matrix
-        self.vectorizer = CountVectorizer()  # not using any stop_words : not filtering out any words > 2 chars
+        self.vectorizer = CountVectorizer(input="content",
+                                          stop_words=None,  # not filtering out any words > 2 chars
+                                          decode_error="ignore",
+                                          strip_accents="unicode",
+                                          lowercase=True)
         self.n_gram_matrix = self.vectorizer.fit_transform(texts)  # requires all documents in memory
         # TODO make scale out with this:
         # https://scikit-learn.org/stable/auto_examples/applications/plot_out_of_core_classification.html#sphx-glr-auto-examples-applications-plot-out-of-core-classification-py
@@ -65,9 +70,9 @@ class Corpus:
         tokens_not_found = self.apply_floor_zero(diff_negatives)
         return initial_token_count - tokens_not_found.sum()
 
-    def get_best_match(self, search_term, max_rank=1):
+    def get_matching_documents(self, search_term):
         """
-        search for string in loaded all documents
+        search for string in all loaded documents
         params:
         search_term: a sentence to be separated into words
         max_rank: number of documents to return
@@ -89,9 +94,8 @@ class Corpus:
                 score.append([nr_tokens_found, self.documents[i]])
 
         score.sort(key=lambda x: x[0], reverse=True)
-        nr_results = min(max_rank, len(score))
-        logging.debug(f"returning {nr_results} best matches")
-        return score[0: nr_results]
+        logging.debug(f"returning {len(score)} matches")
+        return score
 
     @staticmethod
     def apply_floor_zero(matrix):

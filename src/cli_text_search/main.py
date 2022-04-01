@@ -42,15 +42,15 @@ def search(answer, corpus):
     tokenize search term and score documents based on presence of each search word
     return formatted text of documents and their score
     """
-    search_tokens = Corpus([answer], input_type="string")
+    search_tokens = Corpus([answer], input_type="content")
     nr_tokens = len(search_tokens.get_dictionary())
     logging.debug(f"number of (unique) tokens in search: {nr_tokens}")
     tokens_as_string = ' '.join(search_tokens.get_dictionary().flatten())
-    document_score = corpus.get_best_match(search_term=tokens_as_string, max_rank=max_results)
+    document_score = corpus.get_matching_documents(search_term=tokens_as_string)
     output = ''
     if len(document_score) == 0:
         return "no matches found"
-    for result in document_score:
+    for result in document_score[0: max_results]:
         output += f"{result[1]} : {round(100.0 * result[0]/nr_tokens,0)}% \n"
     return output
 
@@ -67,7 +67,7 @@ def invoke_prompt(folder_path):
     file_paths = collect_file_paths(folder_path)
 
     # TODO make this asynch
-    corpus = Corpus(file_paths, input_type="filepath")
+    corpus = Corpus(file_paths, input_type="filename")
 
     loop = True
     logging.debug(f"starting interactive user prompt")
