@@ -37,8 +37,8 @@ class Corpus:
         # TODO make scale out with this:
         # https://scikit-learn.org/stable/auto_examples/applications/plot_out_of_core_classification.html#sphx-glr-auto-examples-applications-plot-out-of-core-classification-py
 
-        logging.info(f"document term matrix shape: {self.get_document_term_matrix().shape}")
-        logging.debug(f"dictionary: {self.get_dictionary()}")
+        logging.debug(f"document term matrix shape: {self.get_document_term_matrix().shape}, "
+                      f"dictionary: {self.get_dictionary()}")
 
     def get_document_term_matrix(self):
         """
@@ -57,7 +57,8 @@ class Corpus:
 
     def get_tokens_in_document(self, search_ngram, document_index):
         """
-        return the number of tokens that were not found
+        return the number of tokens that were found in document
+        initial_token_count = search words that exist in dictionary of ALL documents (<= word count in search )
         """
         initial_token_count = search_ngram.sum()
         diff_negatives = search_ngram - self.n_gram_matrix[document_index, :]
@@ -67,13 +68,11 @@ class Corpus:
     def get_best_match(self, search_term, max_rank=1):
         """
         search for string in loaded all documents
-
         params:
         search_term: a sentence to be separated into words
-
-
+        max_rank: number of documents to return
         """
-        logging.info(f"searching for '{search_term}' in :{len(self.documents)} documents")
+        logging.debug(f"searching for '{search_term}' in :{len(self.documents)} documents")
         score = []
         input_search_term = [search_term]  # instantiate empty list of strings
         search_term_ngram = self.vectorizer.transform(input_search_term)  #vectorize against CORPUS dictionary
@@ -85,25 +84,24 @@ class Corpus:
 
             nr_tokens_found = self.get_tokens_in_document(search_term_ngram, i)
             logging.debug(f"found {nr_tokens_found} token(s) in {self.documents[i]}")
-            document_score = [nr_tokens_found, self.documents[i]]
 
             if nr_tokens_found > 0:
                 score.append([nr_tokens_found, self.documents[i]])
 
         score.sort(key=lambda x: x[0], reverse=True)
         nr_results = min(max_rank, len(score))
-        logging.info(f"returning {nr_results} best matches")
+        logging.debug(f"returning {nr_results} best matches")
         return score[0: nr_results]
 
     @staticmethod
-    def apply_floor_zero(diff_negatives):
+    def apply_floor_zero(matrix):
         """
         whether a word shows up once or many times in a document doesn't matter,
         the score stays the same
         """
-        zero_array = np.zeros(diff_negatives.shape, dtype=diff_negatives.dtype)
-        diff_coverage = np.maximum(diff_negatives.toarray(), zero_array)
-        return diff_coverage
+        zero_array = np.zeros(matrix.shape, dtype=matrix.dtype)
+        floored_matrix = np.maximum(matrix.toarray(), zero_array)
+        return floored_matrix
 
     @staticmethod
     def load_texts(document_paths):

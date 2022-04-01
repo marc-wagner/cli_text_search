@@ -15,20 +15,50 @@ max_results = 10  # max number of results returned
 
 # ---- Python API ----
 def collect_file_paths(directory):
+    """
+    build a list of valid text files to be used in corpus
+    """
     text_file_paths = []
     for dirpath, dirnames, files in os.walk(directory):
         for name in files:
-            file_path = os.path.join(dirpath, name)
-            logging.debug(f"found file {file_path}")
-            text_file_paths.append(file_path)
-
+            try:
+                file_path = os.path.join(dirpath, name)
+                text_file = open(file_path, "r")
+                logging.debug(f"found file {file_path}")
+            except UnicodeEncodeError:
+                logging.warning(f"could not open file {file_path}")
+            except OSError:
+                logging.warning(f"could not open file {file_path}")
+            finally:
+                text_file.close()
+                text_file_paths.append(file_path)
+    logging.info(f"found {len(text_file_paths)} files in directory")
     return text_file_paths
+
+
+def search(answer, corpus):
+    """
+    search for string in all documents in corpus.
+    tokenize search term and score documents based on presence of each search word
+    return formatted text of documents and their score
+    """
+    search_tokens = Corpus([answer], input_type="string")
+    nr_tokens = len(search_tokens.get_dictionary())
+    logging.debug(f"number of (unique) tokens in search: {nr_tokens}")
+    tokens_as_string = ' '.join(search_tokens.get_dictionary().flatten())
+    document_score = corpus.get_best_match(search_term=tokens_as_string, max_rank=max_results)
+    output = ''
+    if len(document_score) == 0:
+        return "no matches found"
+    for result in document_score:
+        output += f"{result[1]} : {round(100.0 * result[0]/nr_tokens,0)}% \n"
+    return output
 
 
 def invoke_prompt(folder_path):
     """
-    manage program workflow:
-        first load corpus for search
+    manage program workflow and prompt:
+        first load corpus of documents,
         then loop: prompt for search term, show matching documents
         until the user types 'quit'
     """
@@ -44,35 +74,20 @@ def invoke_prompt(folder_path):
     s = PromptSession(message='search> ')
     while loop:
         try:
-            #answer = "have you seen my dogs dogs dogs?"
+            #answer = "have you seen my dogs dogs and cats?"
             answer = s.prompt()
 
             if answer == "quit":
                 logging.info(f"user requested to quit program execution")
                 loop = False
             else:
-                search(answer, corpus)
+                print(search(answer, corpus))
         except LookupError:
             logging.error(f"lookup error for search term '{answer}'")
 
 
-def search(answer, corpus):
-    """
-
-    """
-    search_tokens = Corpus([answer], input_type="string")
-    nr_tokens = len(search_tokens.get_dictionary())
-    logging.debug(f"number of (unique) tokens in search: {nr_tokens}")
-    tokens_as_string = ' '.join(search_tokens.get_dictionary().flatten())
-    document_score = corpus.get_best_match(search_term=tokens_as_string, max_rank=max_results)
-    for result in document_score:
-        print(f"{100.0 * result[0]/nr_tokens}% : {result[1]}")
-
-
 # ---- CLI ----
 def main(argv):
-    # assuming only 1 path is provided
-    # TODO validate 1 path assumption
     f = argv[1] if len(argv) > 1 else None
     if f:
         invoke_prompt(f)

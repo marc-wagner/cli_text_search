@@ -50,11 +50,27 @@ Relevance Scoring
 -----------------
 
 Score is calculated on the occurrence of search words, irrelevant of their frequency of occurrence
+1-letter words are ignored
+
 
 .. _pyscaffold-notes:
 
+Data structure
+--------------
+SciKit Learn's compact sparse rows matrix is used as the primary data structure
+to build a dictionary of all words within each document.
+this dictionary is the bottleneck in terms of memory usage.
+It uses a sparse representation of a single datatype, in this case int.
+
+https://scikit-learn.org/stable/auto_examples/applications/
+plot_out_of_core_classification.html#sphx-glr-auto-examples-
+applications-plot-out-of-core-classification-py
+
+
 Note
 ====
+
+
 
 This project has been set up using PyScaffold 4.2.1. For details and usage
 information on PyScaffold see https://pyscaffold.org/.
