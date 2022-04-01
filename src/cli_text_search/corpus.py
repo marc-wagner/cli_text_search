@@ -1,6 +1,3 @@
-import os
-
-from IPython.core.display_functions import display
 from sklearn.feature_extraction.text import CountVectorizer
 import pandas as pd
 import numpy as np
@@ -24,19 +21,19 @@ class Corpus:
         apply_floor_zero(matrix)
     """
 
-    def __init__(self, input, input_type="content"):
+    def __init__(self, data, input_type="content"):
         """
         overload constructor with a list of strings (content) or with a list of absolute filenames
         but build a consistent Vectorizer of input_type 'content' to handle both cases in search
         """
         if input_type == "content":
-            texts = input
+            texts = data
         else:
             if input_type == "filename":
-                texts = self.load_texts(input)
+                texts = self.load_texts(data)
             else:
                 raise SyntaxError("input_type should be 'content' or 'filename'")
-        self.documents = input  # required to extract row labels from sparse matrix
+        self.documents = data  # required to extract row labels from sparse matrix
         self.vectorizer = CountVectorizer(input="content",
                                           stop_words=None,  # not filtering out any words > 2 chars
                                           decode_error="ignore",
@@ -91,9 +88,9 @@ class Corpus:
         logging.debug(f"searching for '{search_term}' in :{len(self.documents)} documents")
         score = []
         input_search_term = [search_term]  # instantiate empty list of strings
-        search_term_ngram = self.vectorizer.transform(input_search_term)  #vectorize against CORPUS dictionary
+        search_term_ngram = self.vectorizer.transform(input_search_term)  # vectorize against CORPUS dictionary
 
-        if search_term_ngram.sum() == 0:  #no part of the search term is in the corpus
+        if search_term_ngram.sum() == 0:  # no part of the search term is in the corpus
             return score
 
         for i in range(0, len(self.documents)):  # search in each document's dictionary

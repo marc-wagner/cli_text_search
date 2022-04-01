@@ -25,8 +25,8 @@ def collect_file_paths(directory):
     text_file_paths = []
     for dirpath, dirnames, files in os.walk(directory):
         for name in files:
+            file_path = os.path.join(dirpath, name)
             try:
-                file_path = os.path.join(dirpath, name)
                 text_file = open(file_path, "r")
                 logging.debug(f"found file {file_path}")
             except UnicodeEncodeError:
@@ -83,9 +83,9 @@ def invoke_prompt(folder_path):
     logging.debug(f"starting interactive user prompt")
     s = PromptSession(message="'search (type 'quit' to exit) > ")
     while loop:
+        answer = s.prompt()
+        # answer = "hello world"
         try:
-            answer = s.prompt()
-            #answer = "hello world"
             if answer == "quit":
                 logging.info(f"user requested to quit program execution")
                 loop = False
