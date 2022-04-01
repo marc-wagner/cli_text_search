@@ -32,7 +32,7 @@ def collect_file_paths(directory):
             finally:
                 text_file.close()
                 text_file_paths.append(file_path)
-    logging.info(f"found {len(text_file_paths)} files in directory")
+    logging.info(f"found {len(text_file_paths)} files in directory {directory}")
     return text_file_paths
 
 
@@ -62,7 +62,7 @@ def invoke_prompt(folder_path):
         then loop: prompt for search term, show matching documents
         until the user types 'quit'
     """
-    logging.info(f"input path: {folder_path}")
+    logging.debug(f"input path: {folder_path}")
 
     file_paths = collect_file_paths(folder_path)
 
@@ -70,8 +70,8 @@ def invoke_prompt(folder_path):
     corpus = Corpus(file_paths, input_type="filepath")
 
     loop = True
-    logging.info(f"starting interactive user prompt")
-    s = PromptSession(message='search> ')
+    logging.debug(f"starting interactive user prompt")
+    s = PromptSession(message="'search (type 'quit' to exit) > ")
     while loop:
         try:
             #answer = "have you seen my dogs dogs and cats?"

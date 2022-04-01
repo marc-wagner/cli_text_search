@@ -7,7 +7,7 @@
     .. image:: https://readthedocs.org/projects/cli_text_search/badge/?version=latest
         :alt: ReadTheDocs
         :target: https://cli_text_search.readthedocs.io/en/stable/
-    .. image:: https://img.shields.io/coveralls/github/<USER>/cli_text_search/main.svg
+    .. image:: https://img.shields.io/coveralls/github/marc-wagner/cli_text_search/main.svg
         :alt: Coveralls
         :target: https://coveralls.io/r/<USER>/cli_text_search
     .. image:: https://img.shields.io/pypi/v/cli_text_search.svg
@@ -27,36 +27,29 @@
     :alt: Project generated with PyScaffold
     :target: https://pyscaffold.org/
 
-===============
-cli_text_search
-===============
-
+## cli_text_search
 
     search for words in a collection of text documents using command line
 
 
-this program is a bare-bones text search engine for text files.
+this program is a bare-bones text search engine for text files. It uses
 
-===
-Use
-===
+## Use
 
-.. code:: bash
-   > python main.py <document_directory>
+'''python
+python main.py <document_directory>
+search: type 'quit' to exit'''
 
-   > [CTRL+C] to exit
+## Relevance Scoring
 
-Relevance Scoring
------------------
-
-Score is calculated on the occurrence of search words, irrelevant of their frequency of occurrence
+Score is calculated on the occurrence of search words
+irrelevant of their frequency of occurrence
 1-letter words are ignored
+the order of the words is ignored
+this deviates from the industry-standard DF-ITF scoring
 
+## Data structure
 
-.. _pyscaffold-notes:
-
-Data structure
---------------
 SciKit Learn's compact sparse rows matrix is used as the primary data structure
 to build a dictionary of all words within each document.
 this dictionary is the bottleneck in terms of memory usage.
@@ -66,11 +59,7 @@ https://scikit-learn.org/stable/auto_examples/applications/
 plot_out_of_core_classification.html#sphx-glr-auto-examples-
 applications-plot-out-of-core-classification-py
 
-
-Note
-====
-
-
+## Note
 
 This project has been set up using PyScaffold 4.2.1. For details and usage
 information on PyScaffold see https://pyscaffold.org/.
