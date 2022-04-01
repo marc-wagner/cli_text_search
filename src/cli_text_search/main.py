@@ -3,7 +3,9 @@ import os
 import sys
 from prompt_toolkit import PromptSession
 
-from cli_text_search.corpus import Corpus
+from src.cli_text_search.corpus import Corpus
+from src.cli_text_search.distributed_corpus import DistributedCorpus
+
 
 logformat = "[%(asctime)s] %(levelname)s:%(name)s:%(message)s"
 logging.basicConfig(level="DEBUG",
@@ -77,15 +79,15 @@ def invoke_prompt(folder_path):
     if len(file_paths) == 0:
         raise FileNotFoundError(f"no text files found in directory {folder_path}")
     # TODO make this asynch
-    corpus = Corpus(file_paths, input_type="filename")
+    corpus = DistributedCorpus(file_paths, input_type="filename")
 
     loop = True
     logging.debug(f"starting interactive user prompt")
     s = PromptSession(message="'search (type 'quit' to exit) > ")
     while loop:
         try:
-            answer = s.prompt()
-            #answer = "hello world"
+            #answer = s.prompt()
+            answer = "hello world"
             if answer == "quit":
                 logging.info(f"user requested to quit program execution")
                 loop = False

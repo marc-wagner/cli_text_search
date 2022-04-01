@@ -25,7 +25,6 @@ class DistributedCorpus(Corpus):
         """
         self.nr_documents_loaded = 0  #initialize dictionary
 
-        for 
         if input_type == "content":
             texts = input
         else:
@@ -40,31 +39,26 @@ class DistributedCorpus(Corpus):
                                           strip_accents="unicode",
                                           lowercase=True)
         self.n_gram_matrix = self.vectorizer.fit_transform(texts)  # requires all documents in memory
-        # TODO make scale out with this:
 
 
-        logging.debug(f"document term matrix shape: {self.get_document_term_matrix().shape}, "
-                      f"dictionary: {self.get_dictionary()}")
+        logging.debug(f"document term matrix shape: {self.get_document_term_matrix().shape}")
 
     def get_document_term_matrix(self):
-        """view matrix that matches terms to documents in human readable form
+        """view matrix that matches hash_buckets to documents
         row headers = documents
-        column headers = terms (words)
-        data = occurrences of 'term' in 'document'
+        column headers = hash buckets
+        data = occurrences of hashed term in 'document'
 
         returns: pandas.dataFrame
         """
         return pd.DataFrame(data=self.n_gram_matrix.toarray(),
-                            index=np.array(self.documents),
-                            columns=self.vectorizer.get_feature_names_out())
+                            index=np.array(self.documents))
 
     def get_dictionary(self):
-        """
-        return dictionary of corpus
-
+        """does not exist for hashed corpus
         rType:
         """
-        return self.vectorizer.get_feature_names_out()
+        raise AttributeError(f"cannot implement parent function {type(super)}:get_dictionary() in {type(self)}")
 
     def get_tokens_in_document(self, search_ngram, document_index):
         """Given a search n-gram and the index of a document in corpus count the occurences of each item document.
