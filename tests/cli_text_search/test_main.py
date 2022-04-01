@@ -3,20 +3,6 @@ import pytest
 
 from cli_text_search import main
 
-
-def test_invoke_prompt():
-    assert False
-
-
-def test_main_no_path():
-    """
-    raise error if no path is provided
-    """
-    argv = []
-    with pytest.raises(Exception):
-        main.main(argv)
-
-
 def test_collect_file_paths_no_binary(tmp_path):
     """
     test a binary file is skipped during collection
@@ -43,3 +29,29 @@ def test_collect_file_paths_subdirectory(tmp_path):
     f.close()
     result = main.collect_file_paths(tmp_path)
     assert result.pop()[-23:] == "/subdirectory/text_file"
+
+def test_search_score():
+    assert False
+
+
+def test_search_tokens():
+    assert False
+
+
+def test_invoke_prompt_no_text():
+    assert False
+
+
+def test_invoke_prompt_quit():
+    assert False
+
+
+def test_main_no_path():
+    """
+    raise error if no path is provided
+    """
+    argv = []
+    with pytest.raises(Exception):
+        main.main(argv)
+
+

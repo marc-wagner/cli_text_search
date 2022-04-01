@@ -65,7 +65,8 @@ def invoke_prompt(folder_path):
     logging.debug(f"input path: {folder_path}")
 
     file_paths = collect_file_paths(folder_path)
-
+    if len(file_paths) == 0:
+        raise FileNotFoundError(f"no text files found in directory {folder_path}")
     # TODO make this asynch
     corpus = Corpus(file_paths, input_type="filename")
 
@@ -74,9 +75,7 @@ def invoke_prompt(folder_path):
     s = PromptSession(message="'search (type 'quit' to exit) > ")
     while loop:
         try:
-            #answer = "have you seen my dogs dogs and cats?"
             answer = s.prompt()
-
             if answer == "quit":
                 logging.info(f"user requested to quit program execution")
                 loop = False
