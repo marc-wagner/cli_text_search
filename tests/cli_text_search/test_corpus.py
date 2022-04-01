@@ -11,52 +11,60 @@ from cli_text_search.corpus import Corpus
 
 class TestCorpus:
 
-    search = "one one one two three four five"
-    corpus = Corpus([search])
+    content = "one one one two three four five"
+    multi_content = ["one one one two three four five", "one two three four"]
+    search = "four five six"
+    corpus_singleton = Corpus([content])
+    corpus_multiple = Corpus(multi_content)
 
     def test_constructor_input_type(self):
         with pytest.raises(SyntaxError):
-            Corpus([self.search], input_type="invalid")
+            Corpus([self.content], input_type="invalid")
 
     def test_get_document_term_matrix_isdf(self):
-        result = self.corpus.get_document_term_matrix()
+        result = self.corpus_singleton.get_document_term_matrix()
         assert isinstance(result, pandas.core.frame.DataFrame)
 
     def test_get_document_term_matrix_shape(self):
-        result = self.corpus.get_document_term_matrix()
+        result = self.corpus_singleton.get_document_term_matrix()
         assert result.to_string() == """                                 five  four  one  three  two
 one one one two three four five     1     1    3      1    1"""
 
     def test_get_dictionary_in(self):
-        corpus_dict = self.corpus.get_dictionary()
+        corpus_dict = self.corpus_singleton.get_dictionary()
         assert "one" in corpus_dict
 
     def test_get_dictionary_not_in(self):
-        corpus_dict = self.corpus.get_dictionary()
+        corpus_dict = self.corpus_singleton.get_dictionary()
         assert "zero" not in corpus_dict
         assert len(corpus_dict) == 5
 
     def test_get_dictionary_len(self):
-        corpus_dict = self.corpus.get_dictionary()
+        corpus_dict = self.corpus_singleton.get_dictionary()
         assert len(corpus_dict) == 5
 
     def test_get_tokens_in_document_max(self):
-        assert False
+        ngram = self.corpus_singleton.vectorizer.transform([self.search])
+        nr_tokens = self.corpus_singleton.get_tokens_in_document(ngram, 0)
+        assert nr_tokens <= ngram.sum()
 
     def test_get_tokens_in_document_min(self):
-        assert False
+        ngram = self.corpus_singleton.vectorizer.transform([self.search])
+        nr_tokens = self.corpus_singleton.get_tokens_in_document(ngram, 0)
+        assert nr_tokens >= 0
 
     def test_get_best_match_sort_desc(self):
-        # elements are sorted desc
-        assert False
+        result = self.corpus_multiple.get_matching_documents(self.search)
+        assert result[0][0] >= result[1][0]
 
     def test_get_best_match_no_match(self):
-        # return empty array
-        assert False
+        result = self.corpus_multiple.get_matching_documents("invalid")
+        assert len(result) == 0
 
-    def test_get_best_match_max(self):
-        # max nr tokens found < nr tokens
-        assert False
+    def test_get_best_match_nr_search_tokens_is_max(self):
+        """test that the maximum score is no higher than the number of words in the search string"""
+        result = self.corpus_multiple.get_matching_documents(self.search)
+        assert result[0][0] <= len(self.search.split())
 
     def test_apply_floor_zero(self):
 

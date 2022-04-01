@@ -13,10 +13,14 @@ logging.basicConfig(level="DEBUG",
 
 max_results = 10  # max number of results returned
 
+
 # ---- Python API ----
 def collect_file_paths(directory):
     """
     build a list of valid text files to be used in corpus
+
+    :param directory: full path of directory holding documents and subdirectories
+    returns: a list of full file paths
     """
     text_file_paths = []
     for dirpath, dirnames, files in os.walk(directory):
@@ -37,10 +41,12 @@ def collect_file_paths(directory):
 
 
 def search(answer, corpus):
-    """
-    search for string in all documents in corpus.
+    """search for string in all documents in corpus.
     tokenize search term and score documents based on presence of each search word
-    return formatted text of documents and their score
+
+    :param answer: search string to be found
+    :param corpus: collection of documents to search in
+    returns: formatted text of documents and their score
     """
     search_tokens = Corpus([answer], input_type="content")
     nr_tokens = len(search_tokens.get_dictionary())
@@ -56,15 +62,18 @@ def search(answer, corpus):
 
 
 def invoke_prompt(folder_path):
-    """
-    manage program workflow and prompt:
+    """manage program workflow and prompt:
         first load corpus of documents,
         then loop: prompt for search term, show matching documents
         until the user types 'quit'
+
+        param: folder_path: directory that contains documents to search in
+        returns: None
     """
     logging.debug(f"input path: {folder_path}")
 
     file_paths = collect_file_paths(folder_path)
+    print(f"len filepaths: {len(file_paths)}")
     if len(file_paths) == 0:
         raise FileNotFoundError(f"no text files found in directory {folder_path}")
     # TODO make this asynch
@@ -76,6 +85,7 @@ def invoke_prompt(folder_path):
     while loop:
         try:
             answer = s.prompt()
+            #answer = "hello world"
             if answer == "quit":
                 logging.info(f"user requested to quit program execution")
                 loop = False

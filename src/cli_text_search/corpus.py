@@ -9,15 +9,19 @@ import logging
 
 class Corpus:
     """
-    a corpus is a collection of documents
-    that can be searched for word occurrences
-    or via a dictionary
-
+    Corpus is a collection of documents that can be searched for word occurrences or via a dictionary
     the class uses scikit learn to vectorize text as bag-of-words n-gram with n=1 and does not use stop words.
     this means that 1-letter words like "I", "a" or abbreviated words like "'s" are ignored for scoring
 
     The score of a document for a search is determined by its coverage:
     if all search words are present, the score is is a good match for the The score that is returned
+
+    Methods:
+        __init__(self, input, input_type="content")
+        get_document_term_matrix(self)
+        get_tokens_in_document(self, search_ngram, document_index)
+        get_matching_documents(self, search_term)
+        apply_floor_zero(matrix)
     """
 
     def __init__(self, input, input_type="content"):
@@ -46,9 +50,12 @@ class Corpus:
                       f"dictionary: {self.get_dictionary()}")
 
     def get_document_term_matrix(self):
-        """
-        view matrix in human readable form with
-        row headers = document path and column headers = words in document
+        """view matrix that matches terms to documents in human readable form
+        row headers = documents
+        column headers = terms (words)
+        data = occurrences of 'term' in 'document'
+
+        returns: pandas.dataFrame
         """
         return pd.DataFrame(data=self.n_gram_matrix.toarray(),
                             index=np.array(self.documents),
@@ -57,13 +64,18 @@ class Corpus:
     def get_dictionary(self):
         """
         return dictionary of corpus
+
+        rType:
         """
         return self.vectorizer.get_feature_names_out()
 
     def get_tokens_in_document(self, search_ngram, document_index):
-        """
-        return the number of tokens that were found in document
-        initial_token_count = search words that exist in dictionary of ALL documents (<= word count in search )
+        """Given a search n-gram and the index of a document in corpus count the occurences of each item document.
+        Note that initial_token_count = search words that exist in dictionary of ALL documents (<= word count in search)
+
+        :param search_ngram: tokenized search
+        :param document_index: index of document in corpus
+        :returns initial_token_count - tokens_not_found.sum(): the number of tokens that were found in document
         """
         initial_token_count = search_ngram.sum()
         diff_negatives = search_ngram - self.n_gram_matrix[document_index, :]
@@ -71,11 +83,10 @@ class Corpus:
         return initial_token_count - tokens_not_found.sum()
 
     def get_matching_documents(self, search_term):
-        """
-        search for string in all loaded documents
-        params:
-        search_term: a sentence to be separated into words
-        max_rank: number of documents to return
+        """search for string in all loaded documents
+
+        :param search_term: search string as words separated by whitespace
+        :returns score: collection of (nr of tokens found, document file path)
         """
         logging.debug(f"searching for '{search_term}' in :{len(self.documents)} documents")
         score = []
@@ -99,9 +110,11 @@ class Corpus:
 
     @staticmethod
     def apply_floor_zero(matrix):
-        """
-        whether a word shows up once or many times in a document doesn't matter,
-        the score stays the same
+        """apply a floor of zero to all negative values in a matrix
+        whether a word shows up once or many times in a document doesn't matter, the score stays the same
+
+        :param matrix: a class that can be cast to a matrix
+        :returns floored_matrix: matrix of same type as input, without negative values
         """
         zero_array = np.zeros(matrix.shape, dtype=matrix.dtype)
         floored_matrix = np.maximum(matrix.toarray(), zero_array)
