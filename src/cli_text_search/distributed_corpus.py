@@ -30,6 +30,7 @@ class DistributedCorpus(Corpus):
         else:
             if input_type == "filename":
                 texts = self.load_texts(input)
+                self.nr_documents_loaded = len(texts)
             else:
                 raise SyntaxError("input_type should be 'content' or 'filename'")
         self.documents = input  # required to extract row labels from sparse matrix
