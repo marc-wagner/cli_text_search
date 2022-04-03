@@ -63,23 +63,30 @@ class DistributedCorpus(Corpus):
         raise AttributeError(f"cannot implement parent function {type(super)}:get_dictionary() in {type(self)}")
 
     def get_tokens_in_document(self, search_ngram, document_index):
-        """Given a search n-gram and the index of a document in corpus count the occurences of each item document.
-        Note that initial_token_count = search words that exist in dictionary of ALL documents (<= word count in search)
+        """
+        Given a search n-gram and the index of a document in corpus get a score of matching tokens, weighted by the number
+        of occurrences in the document
 
-        :param search_ngram: tokenized search
-        :param document_index: index of document in corpus
-        :returns initial_token_count - tokens_not_found.sum(): the number of tokens that were found in document
+        :param search_ngram: the n-grams that we want to search for in the corpus
+        :param document_index: the index of the document in the corpus
+        :return: The number of tokens that were found in the document.
         """
         initial_token_count = search_ngram.sum()
         diff_negatives = search_ngram - self.n_gram_matrix[document_index, :]
         tokens_not_found = self.apply_floor_zero(diff_negatives)
         return initial_token_count - tokens_not_found.sum()
 
-    def get_matching_documents(self, search_term):
-        """search for string in all loaded documents
+    def get_matching_documents(self, search_term, max_len_result=1):
+        """
+        The function searches for the search term in the corpus dictionary.
+        If it finds it, it counts the number of tokens in the document that match the search term.
+        If the number of tokens is greater than 0, it appends the number of tokens and the document name to the score list.
+        The function then sorts the score list by the number of tokens found in descending order
 
-        :param search_term: search string as words separated by whitespace
-        :returns score: collection of (nr of tokens found, document file path)
+        :param search_term: the string to search for
+        :param max_len_result: the maximum number of results to return, defaults to 1 (optional)
+        :return: A list of tuples, where each tuple contains the number of tokens found in the document and the document's
+        file path.
         """
         logging.debug(f"searching for '{search_term}' in :{len(self.documents)} documents")
         score = []
