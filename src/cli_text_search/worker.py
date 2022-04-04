@@ -30,7 +30,11 @@ def init():
 @app.route('/search', methods=['GET'])
 def search():
     args = request.args
-    return json.dumps(corpus.get_matching_documents(search_term, max_len_result))
+    if "max_results" in args:
+        result = json.dumps(corpus.get_matching_documents(args["q"], args["max_results"]))
+    else:
+        result = json.dumps(corpus.get_matching_documents(args["q"]))
+    return result
 
 
 app.run()

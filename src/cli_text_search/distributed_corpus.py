@@ -15,13 +15,14 @@ class DistributedCorpus(Corpus):
         get_document_term_matrix(self)
         get_tokens_in_document(self, search_ngram, document_index)
         get_matching_documents(self, search_term)
-        apply_floor_zero(matrix)
     """
 
     def __init__(self, input, input_type="content"):
         """
         overload constructor with a list of strings (content) or with a list of absolute filenames
         but build a consistent Vectorizer of input_type 'content' to handle both cases in search
+
+        :returns: corpus object
         """
         self.nr_documents_loaded = 0  #initialize dictionary
 
@@ -77,58 +78,3 @@ class DistributedCorpus(Corpus):
         tokens_not_found = self.apply_floor_zero(diff_negatives)
         return initial_token_count - tokens_not_found.sum()
 
-    def get_matching_documents(self, search_term, max_len_result=1):
-        """
-        The function searches for the search term in the corpus dictionary.
-        If it finds it, it counts the number of tokens in the document that match the search term.
-        If the number of tokens is greater than 0, it appends the number of tokens and the document name to the score list.
-        The function then sorts the score list by the number of tokens found in descending order
-
-        :param search_term: the string to search for
-        :param max_len_result: the maximum number of results to return, defaults to 1 (optional)
-        :return: A list of tuples, where each tuple contains the number of tokens found in the document and the document's
-        file path.
-        """
-        logging.debug(f"searching for '{search_term}' in :{len(self.documents)} documents")
-        score = []
-        input_search_term = [search_term]  # instantiate empty list of strings
-        search_term_ngram = self.vectorizer.transform(input_search_term)  #vectorize against CORPUS dictionary
-
-        if search_term_ngram.sum() == 0:  #no part of the search term is in the corpus
-            return score
-
-        for i in range(0, len(self.documents)):  # search in each document's dictionary
-
-            nr_tokens_found = self.get_tokens_in_document(search_term_ngram, i)
-            logging.debug(f"found {nr_tokens_found} token(s) in {self.documents[i]}")
-
-            if nr_tokens_found > 0:
-                score.append([nr_tokens_found, self.documents[i]])
-
-        score.sort(key=lambda x: x[0], reverse=True)
-        logging.debug(f"returning {len(score)} matches")
-        return score
-
-    @staticmethod
-    def apply_floor_zero(matrix):
-        """apply a floor of zero to all negative values in a matrix
-        whether a word shows up once or many times in a document doesn't matter, the score stays the same
-
-        :param matrix: a class that can be cast to a matrix
-        :returns floored_matrix: matrix of same type as input, without negative values
-        """
-        zero_array = np.zeros(matrix.shape, dtype=matrix.dtype)
-        floored_matrix = np.maximum(matrix.toarray(), zero_array)
-        return floored_matrix
-
-    @staticmethod
-    def load_texts(document_paths):
-        texts = []
-        # TODO find best way to read fault tolerant
-        for path in document_paths:
-            try:
-                text_file = open(path, "r")
-                texts.append(text_file.read())
-            finally:
-                text_file.close()
-        return texts
