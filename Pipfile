@@ -9,6 +9,7 @@ scikit-learn = "*"
 pandas = "*"
 ipython = "*"
 matplotlib = "*"
+flask = "*"
 
 [dev-packages]
 setuptools = "*"

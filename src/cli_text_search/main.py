@@ -17,10 +17,10 @@ max_results = 10  # max number of results returned
 # ---- Python API ----
 def collect_file_paths(directory):
     """
-    build a list of valid text files to be used in corpus
+    Given a directory, return a list of all the files in that directory and its subdirectories
 
-    :param directory: full path of directory holding documents and subdirectories
-    returns: a list of full file paths
+    :param directory: the directory that holds the text files to be used in the corpus
+    :return: A list of file paths
     """
     text_file_paths = []
     for dirpath, dirnames, files in os.walk(directory):
@@ -46,7 +46,8 @@ def search(answer, corpus):
 
     :param answer: search string to be found
     :param corpus: collection of documents to search in
-    returns: formatted text of documents and their score
+    :returns: formatted text of documents and their score
+    :rType: String
     """
     search_tokens = Corpus([answer], input_type="content")
     nr_tokens = len(search_tokens.get_dictionary())
@@ -57,7 +58,7 @@ def search(answer, corpus):
     if len(document_score) == 0:
         return "no matches found"
     for result in document_score[0: max_results]:
-        output += f"{result[1]} : {round(100.0 * result[0]/nr_tokens,0)}% \n"
+        output += f"{result['document']} : {round(100.0 * result['score']/nr_tokens,0)}% \n"
     return output
 
 
@@ -67,8 +68,8 @@ def invoke_prompt(folder_path):
         then loop: prompt for search term, show matching documents
         until the user types 'quit'
 
-        param: folder_path: directory that contains documents to search in
-        returns: None
+        :param folder_path: directory that contains documents to search in
+        :returns: None
     """
     logging.debug(f"input path: {folder_path}")
 

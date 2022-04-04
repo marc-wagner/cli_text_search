@@ -25,6 +25,8 @@ class Corpus:
         """
         overload constructor with a list of strings (content) or with a list of absolute filenames
         but build a consistent Vectorizer of input_type 'content' to handle both cases in search
+
+        :returns: corpus object
         """
         if input_type == "content":
             texts = data
@@ -52,7 +54,7 @@ class Corpus:
         column headers = terms (words)
         data = occurrences of 'term' in 'document'
 
-        returns: pandas.dataFrame
+        :returns: pandas.dataFrame
         """
         return pd.DataFrame(data=self.n_gram_matrix.toarray(),
                             index=np.array(self.documents),
@@ -60,9 +62,7 @@ class Corpus:
 
     def get_dictionary(self):
         """
-        return dictionary of corpus
-
-        rType:
+        :returns: the dictionary of corpus
         """
         return self.vectorizer.get_feature_names_out()
 
@@ -72,7 +72,7 @@ class Corpus:
 
         :param search_ngram: tokenized search
         :param document_index: index of document in corpus
-        :returns initial_token_count - tokens_not_found.sum(): the number of tokens that were found in document
+        :returns: initial_token_count - tokens_not_found.sum(): the number of tokens that were found in document
         """
         initial_token_count = search_ngram.sum()
         diff_negatives = search_ngram - self.n_gram_matrix[document_index, :]
@@ -83,7 +83,7 @@ class Corpus:
         """search for string in all loaded documents
 
         :param search_term: search string as words separated by whitespace
-        :returns score: collection of (nr of tokens found, document file path)
+        :returns: score: collection of (nr of tokens found, document file path)
         """
         logging.debug(f"searching for '{search_term}' in :{len(self.documents)} documents")
         score = []
@@ -99,7 +99,7 @@ class Corpus:
             logging.debug(f"found {nr_tokens_found} token(s) in {self.documents[i]}")
 
             if nr_tokens_found > 0:
-                score.append([nr_tokens_found, self.documents[i]])
+                score.append({'score': nr_tokens_found, 'document': self.documents[i]})
 
         score.sort(key=lambda x: x[0], reverse=True)
         logging.debug(f"returning {len(score)} matches")
@@ -107,11 +107,11 @@ class Corpus:
 
     @staticmethod
     def apply_floor_zero(matrix):
-        """apply a floor of zero to all negative values in a matrix
-        whether a word shows up once or many times in a document doesn't matter, the score stays the same
+        """
+        Given a matrix, return a matrix with all negative values replaced with zero
 
         :param matrix: a class that can be cast to a matrix
-        :returns floored_matrix: matrix of same type as input, without negative values
+        :return: A matrix with all negative values set to zero.
         """
         zero_array = np.zeros(matrix.shape, dtype=matrix.dtype)
         floored_matrix = np.maximum(matrix.toarray(), zero_array)
