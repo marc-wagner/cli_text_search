@@ -55,7 +55,7 @@ one one one two three four five     1     1    3      1    1"""
 
     def test_get_best_match_sort_desc(self):
         result = self.corpus_multiple.get_matching_documents(self.search)
-        assert result[0][0] >= result[1][0]
+        assert result[0]['score'] >= result[1]['score']
 
     def test_get_best_match_no_match(self):
         result = self.corpus_multiple.get_matching_documents("invalid")
@@ -63,12 +63,12 @@ one one one two three four five     1     1    3      1    1"""
 
     def test_get_best_match_full_score(self):
         result = self.corpus_multiple.get_matching_documents(self.content)
-        assert result[0][0] == len(self.content.split())
+        assert result[0]['score'] == len(self.content.split())
 
     def test_get_best_match_nr_search_tokens_is_max(self):
         """test that the maximum score is no higher than the number of words in the search string"""
         result = self.corpus_multiple.get_matching_documents(self.search)
-        assert result[0][0] <= len(self.search.split())
+        assert result[0]['score'] <= len(self.search.split())
 
     def test_apply_floor_zero(self):
 
