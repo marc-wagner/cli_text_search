@@ -61,6 +61,10 @@ one one one two three four five     1     1    3      1    1"""
         result = self.corpus_multiple.get_matching_documents("invalid")
         assert len(result) == 0
 
+    def test_get_best_match_full_score(self):
+        result = self.corpus_multiple.get_matching_documents(self.content)
+        assert result[0][0] == len(self.content.split())
+
     def test_get_best_match_nr_search_tokens_is_max(self):
         """test that the maximum score is no higher than the number of words in the search string"""
         result = self.corpus_multiple.get_matching_documents(self.search)
