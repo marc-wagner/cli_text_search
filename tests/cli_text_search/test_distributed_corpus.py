@@ -1,10 +1,7 @@
 """
 unit tests for Corpus class
 """
-import numpy as np
-import pandas
 import pytest
-from scipy.sparse import csr_matrix
 
 from src.cli_text_search.distributed_corpus import DistributedCorpus
 
@@ -18,8 +15,8 @@ class TestDistributedCorpus:
     corpus_multiple = DistributedCorpus(multi_content)
 
     def test_get_dictionary_error(self):
-        corpus_dict = self.corpus_singleton.get_dictionary()
-        assert "one" in corpus_dict
+        with pytest.raises(Exception):
+            self.corpus_singleton.get_dictionary()
 
     def test_get_best_match_sort_desc(self):
         result = self.corpus_multiple.get_matching_documents(self.search)

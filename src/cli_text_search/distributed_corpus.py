@@ -2,7 +2,7 @@ from sklearn.feature_extraction.text import HashingVectorizer
 import pandas as pd
 import numpy as np
 import logging
-from corpus import Corpus
+from src.cli_text_search.corpus import Corpus
 
 
 class DistributedCorpus(Corpus):
