@@ -101,7 +101,7 @@ class Corpus:
             if nr_tokens_found > 0:
                 score.append({'score': nr_tokens_found, 'document': self.documents[i]})
 
-        score.sort(key=lambda x: x[0], reverse=True)
+        score.sort(key=lambda x: x['score'], reverse=True)
         logging.debug(f"returning {len(score)} matches")
         return score
 
