@@ -1,4 +1,6 @@
 import json
+import os
+
 from flask import Flask, request
 
 from src.cli_text_search.distributed_corpus import DistributedCorpus
@@ -37,4 +39,4 @@ def search():
     return result
 
 
-app.run()
+app.run(port=os.environ.get('PORT'))
