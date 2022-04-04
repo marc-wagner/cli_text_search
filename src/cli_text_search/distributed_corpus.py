@@ -40,7 +40,7 @@ class DistributedCorpus(Corpus):
                                             decode_error="ignore",
                                             strip_accents="unicode",
                                             lowercase=True,
-                                            n_features=2 ** 3,  # TODO reset this to 2 ** 18
+                                            n_features=2 ** 18,
                                             alternate_sign=False)
         self.n_gram_matrix = self.vectorizer.fit_transform(texts)  # requires all documents in memory
 
@@ -64,17 +64,4 @@ class DistributedCorpus(Corpus):
         """
         raise AttributeError(f"cannot implement parent function {type(super)}:get_dictionary() in {type(self)}")
 
-    def get_tokens_in_document(self, search_ngram, document_index):
-        """
-        Given a search n-gram and the index of a document in corpus get a score of matching tokens, weighted by the number
-        of occurrences in the document
-
-        :param search_ngram: the n-grams that we want to search for in the corpus
-        :param document_index: the index of the document in the corpus
-        :return: The number of tokens that were found in the document.
-        """
-        initial_token_count = search_ngram.sum()
-        diff_negatives = search_ngram - self.n_gram_matrix[document_index, :]
-        tokens_not_found = self.apply_floor_zero(diff_negatives)
-        return initial_token_count - tokens_not_found.sum()
 
