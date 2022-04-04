@@ -6,7 +6,7 @@ import pandas
 import pytest
 from scipy.sparse import csr_matrix
 
-from cli_text_search.distributed_corpus import DistributedCorpus
+from src.cli_text_search.distributed_corpus import DistributedCorpus
 
 
 class TestDistributedCorpus:
@@ -32,4 +32,4 @@ class TestDistributedCorpus:
     def test_get_best_match_nr_search_tokens_is_max(self):
         """test that the maximum score is no higher than the number of words in the search string"""
         result = self.corpus_multiple.get_matching_documents(self.search)
-        assert result[0][0] <= len(self.search.split())
+        assert result[0]['score'] <= len(self.search.split())

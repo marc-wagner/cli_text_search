@@ -25,8 +25,6 @@ class Corpus:
         """
         overload constructor with a list of strings (content) or with a list of absolute filenames
         but build a consistent Vectorizer of input_type 'content' to handle both cases in search
-
-        :returns: corpus object
         """
         if input_type == "content":
             texts = data
@@ -101,7 +99,7 @@ class Corpus:
             if nr_tokens_found > 0:
                 score.append({'score': nr_tokens_found, 'document': self.documents[i]})
 
-        score.sort(key=lambda x: x[0], reverse=True)
+        score.sort(key=lambda x: x['score'], reverse=True)
         logging.debug(f"returning {len(score)} matches")
         return score
 
