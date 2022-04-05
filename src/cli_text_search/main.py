@@ -1,14 +1,12 @@
 import asyncio
-import json
 import logging
 import os
 import sys
-import requests
 import http
-
 from prompt_toolkit import PromptSession
 
 from cli_text_search.corpus import Corpus
+from src.cli_text_search.proxy_corpus import ProxyCorpus
 
 logformat = "[%(asctime)s] %(levelname)s:%(name)s:%(message)s"
 logging.basicConfig(level="DEBUG",
@@ -18,7 +16,6 @@ logging.basicConfig(level="DEBUG",
 http.client.HTTPConnection.debuglevel = 1
 
 max_results = 10  # max number of results returned
-nr_workers = 1
 
 
 # ---- Python API ----
@@ -60,29 +57,13 @@ async def search(answer, corpus):
     nr_tokens = len(search_tokens.get_dictionary())
     logging.debug(f"number of (unique) tokens in search: {nr_tokens}")
     tokens_as_string = ' '.join(search_tokens.get_dictionary().flatten())
-    document_score = corpus.get_matching_documents(search_term=tokens_as_string)
+    document_score = await corpus.get_matching_documents(search_term=tokens_as_string)
     output = ''
     if len(document_score) == 0:
         return "no matches found"
     for result in document_score[0: max_results]:
         output += f"{result['document']} : {round(100.0 * result['score']/nr_tokens,0)}% \n"
     return output
-
-
-# TODO move this to ProxyCorpus. figure out how to best handle worker config: embed in class?
-async def init_remote_corpus(input, input_type, worker):
-    logging.debug(f"worker: {worker}")
-    if len(input) == 0:
-        raise RuntimeError("input data is an empty list")
-    route = '/init'
-    headers = {'Content-type': 'application/json'}
-    url = os.environ.get(f"WORKER_HOST_{worker}") + ":" + os.environ.get(f"WORKER_PORT_{worker}") + route
-    body = json.dumps({"worker_id": worker,"file_paths": input})
-    logging.debug(f"sending http POST request to worker {worker} at {url}")
-    res = requests.post(url, body, headers=headers)
-    res.raise_for_status()
-    logging.debug(f"received http response from {url} with status code {res.status_code}")
-    return res.json()['result']
 
 
 async def build_corpus(folder_path, big):
@@ -92,18 +73,9 @@ async def build_corpus(folder_path, big):
     if len(file_paths) == 0:
         raise FileNotFoundError(f"no text files found in directory {folder_path}")
     if big:
-        corpus = []
-        # split files into chunks
-        chunk_size = int(round(len(file_paths) / nr_workers, 0))
-        # res = await asyncio.gather(*(corpus.append(init_remote_corpus(input=file_paths[(i-1)*chunk_size: i*chunk_size-1],
-        #                                                               input_type="filename",
-        #                                                               worker=i)) for i in range(2)))
-        msgs = await asyncio.gather(*(init_remote_corpus(input=file_paths[i * chunk_size: (i+1) * chunk_size:],
-                                                         input_type="filename",
-                                                         worker=i) for i in range(nr_workers)))
-        logging.info("\n".join(msgs))
+        corpus = await ProxyCorpus.create(file_paths, input_type="filename")
     else:
-        corpus = [Corpus(file_paths, input_type="filename")]
+        corpus = Corpus(file_paths, input_type="filename")
     return corpus
 
 
@@ -129,7 +101,7 @@ async def invoke_prompt(folder_path, big=False):
                 logging.info(f"user requested to quit program execution")
                 loop = False
             else:
-                print(search(answer, corpus))
+                print(await search(answer, corpus))
         except LookupError:
             logging.error(f"lookup error for search term '{answer}'")
 
