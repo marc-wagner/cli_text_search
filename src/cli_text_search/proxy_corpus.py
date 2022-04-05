@@ -33,7 +33,7 @@ class ProxyCorpus(Corpus):
     @classmethod
     async def create(cls, file_paths, input_type):
         self = ProxyCorpus(file_paths, input_type)
-        await self.prepare(file_paths, input_type)
+        self.nr_documents_loaded = await self.prepare(file_paths, input_type)
         return self
 
     def __init__(self, input, input_type="filename"):
@@ -53,17 +53,18 @@ class ProxyCorpus(Corpus):
 
     async def prepare(self, file_paths, input_type):
         """
-        The function takes a list of file paths, splits it into chunks, and
-        then assigns each chunk to a worker. The function then waits for all workers to finish their work and returns the
-        corpus
+        It takes a list of file paths, and a string input_type, and returns a list of indexed documents
 
-        :param file_paths: The list of files to be processed
+        :param file_paths: a list of file paths to be indexed
+        :param input_type: 'content' for documents passed as strings or 'filename' for document filepath reference
+        :return: The total number of indexed documents.
         """
         chunk_size = int(round(len(file_paths) / self.nr_workers, 0))
-        msgs = await asyncio.gather(*(self.init_remote_corpus(input=file_paths[i * chunk_size: (i+1) * chunk_size:],
+        list_remote_corpus = await asyncio.gather(*(self.init_remote_corpus(input=file_paths[i * chunk_size: (i+1) * chunk_size:],
                                                               input_type=input_type,
                                                               worker=i) for i in range(self.nr_workers)))
-        logging.info("\n".join(msgs))
+        return sum(list(map(lambda x: x['indexed_documents'], list_remote_corpus)))
+
 
     async def init_remote_corpus(self, input, input_type, worker):
         """
@@ -84,8 +85,9 @@ class ProxyCorpus(Corpus):
         logging.debug(f"sending http POST request to worker {worker} at {url}")
         res = requests.post(url, body, headers=headers)
         res.raise_for_status()
-        logging.debug(f"received http response from {url} with status code {res.status_code}")
-        return res.json()['result']
+        logging.debug(f"received http response from {url} with status code {res.status_code}:"
+                      f" worker {res.json()['worker_id']} is indexing {res.json()['indexed_documents']}")
+        return res.json()
 
     def get_document_term_matrix(self):
         """view matrix that matches hash_buckets to documents
@@ -106,15 +108,18 @@ class ProxyCorpus(Corpus):
 
     async def get_matching_documents(self, search_term):
         logging.debug(f"searching for '{search_term}' in :{len(self.documents)} documents")
-        score = []
-        route = '/search'
-        params = {'q': search_term}
-        for worker in range(0, self.nr_workers):
-            url = os.environ.get(f"WORKER_HOST_{worker}") + ":" + os.environ.get(f"WORKER_PORT_{worker}") + route
-            logging.debug(f"sending http POST request to worker {worker} at {url}")
-            res = requests.get(url, params)
-            res.raise_for_status()
-            logging.debug(f"received http response from {url} with status code {res.status_code}")
-            score.append(res.json())
+        score = await asyncio.gather(*(self.search_remote_corpus(search_term=search_term, worker=i) for i in range(self.nr_workers)))
+        # TODO score should concatenate, not nest lists
+        score.sort(key=lambda x: int(x['score']), reverse=True)
         logging.debug(f"returning {len(score)} matches")
         return score
+
+    async def search_remote_corpus(self, search_term, worker):
+        route = '/search'
+        params = {'q': search_term}
+        url = os.environ.get(f"WORKER_HOST_{worker}") + ":" + os.environ.get(f"WORKER_PORT_{worker}") + route
+        logging.debug(f"sending http POST request to worker {worker} at {url}")
+        res = requests.get(url, params)
+        res.raise_for_status()
+        logging.debug(f"received http response from {url} with status code {res.status_code}")
+        return res.json()

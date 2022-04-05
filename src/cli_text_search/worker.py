@@ -26,7 +26,7 @@ def init():
             corpus = DistributedCorpus(data['file_paths'], "filename")
             initiated = True
             worker_id = data["worker_id"]
-        return json.dumps({'result': f"worker {worker_id} is indexing {corpus.nr_documents_loaded} documents"})
+        return json.dumps({'worker_id': worker_id, "indexed_documents": corpus.nr_documents_loaded})
 
     else:
         return 'Content-Type not supported!'
