@@ -95,8 +95,7 @@ async def invoke_prompt(folder_path, big=False):
     logging.debug(f"starting interactive user prompt")
     s = PromptSession(message="'search (type 'quit' to exit) > ")
     while loop:
-        answer = "have you seen my dog?"
-        # answer = s.prompt()
+        answer = s.prompt()
         try:
             if answer == "quit":
                 logging.info(f"user requested to quit program execution")

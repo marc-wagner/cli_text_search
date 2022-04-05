@@ -108,8 +108,10 @@ class ProxyCorpus(Corpus):
 
     async def get_matching_documents(self, search_term):
         logging.debug(f"searching for '{search_term}' in :{len(self.documents)} documents")
-        score = await asyncio.gather(*(self.search_remote_corpus(search_term=search_term, worker=i) for i in range(self.nr_workers)))
-        # TODO score should concatenate, not nest lists
+        score = []
+        score_clusters = await asyncio.gather(*(self.search_remote_corpus(search_term=search_term, worker=i) for i in range(self.nr_workers)))
+        for cluster in score_clusters:
+            score += cluster
         score.sort(key=lambda x: int(x['score']), reverse=True)
         logging.debug(f"returning {len(score)} matches")
         return score
