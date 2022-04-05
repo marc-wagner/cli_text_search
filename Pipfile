@@ -5,11 +5,11 @@ name = "pypi"
 
 [packages]
 prompt-toolkit = "*"
-scikit-learn = "*"
 pandas = "*"
 ipython = "*"
 matplotlib = "*"
 flask = "*"
+scikit-learn = "==1.0.1"
 
 [dev-packages]
 setuptools = "*"
