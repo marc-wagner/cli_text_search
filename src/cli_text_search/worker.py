@@ -3,13 +3,14 @@ import os
 
 from flask import Flask, request
 
-from src.cli_text_search.distributed_corpus import DistributedCorpus
+from distributed_corpus import DistributedCorpus
 
 app = Flask(__name__)
 app.debug = True
 
 initiated = False
 corpus = None
+worker_id = -1
 
 
 @app.route('/init', methods=['POST'])
@@ -23,7 +24,9 @@ def init():
             global corpus
             corpus = DistributedCorpus(data['file_paths'], "filename")
             initiated = True
-        return json.dumps({'result': f"worker is indexing {corpus.nr_documents_loaded} documents"})
+            global worker_id
+            worker_id = data["worker_id"]
+        return json.dumps({'result': f"worker {worker_id} is indexing {corpus.nr_documents_loaded} documents"})
 
     else:
         return 'Content-Type not supported!'

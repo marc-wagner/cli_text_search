@@ -72,15 +72,17 @@ async def search(answer, corpus):
 # TODO move this to ProxyCorpus. figure out how to best handle worker config: embed in class?
 async def init_remote_corpus(input, input_type, worker):
     logging.debug(f"worker: {worker}")
+    if len(input) == 0:
+        raise RuntimeError("input data is an empty list")
     route = '/init'
     headers = {'Content-type': 'application/json'}
     url = os.environ.get(f"WORKER_HOST_{worker}") + ":" + os.environ.get(f"WORKER_PORT_{worker}") + route
-    body = json.dumps({"file_paths": input})
+    body = json.dumps({"worker_id": worker,"file_paths": input})
     logging.debug(f"sending http POST request to worker {worker} at {url}")
     res = requests.post(url, body, headers=headers)
     res.raise_for_status()
     logging.debug(f"received http response from {url} with status code {res.status_code}")
-    return res.json()
+    return res.json()['result']
 
 
 async def build_corpus(folder_path, big):
@@ -96,9 +98,10 @@ async def build_corpus(folder_path, big):
         # res = await asyncio.gather(*(corpus.append(init_remote_corpus(input=file_paths[(i-1)*chunk_size: i*chunk_size-1],
         #                                                               input_type="filename",
         #                                                               worker=i)) for i in range(2)))
-        await asyncio.gather(*(init_remote_corpus(input=file_paths[(i - 1) * chunk_size: i * chunk_size:],
-                                                  input_type="filename",
-                                                  worker=i) for i in range(nr_workers)))
+        msgs = await asyncio.gather(*(init_remote_corpus(input=file_paths[i * chunk_size: (i+1) * chunk_size:],
+                                                         input_type="filename",
+                                                         worker=i) for i in range(nr_workers)))
+        logging.info("\n".join(msgs))
     else:
         corpus = [Corpus(file_paths, input_type="filename")]
     return corpus
