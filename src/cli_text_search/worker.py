@@ -16,6 +16,7 @@ worker_id = -1
 @app.route('/init', methods=['POST'])
 def init():
     global initiated
+    global worker_id
     content_type = request.headers.get('Content-Type')
     if content_type == 'application/json':
         data = json.loads(request.data)
@@ -24,7 +25,6 @@ def init():
             global corpus
             corpus = DistributedCorpus(data['file_paths'], "filename")
             initiated = True
-            global worker_id
             worker_id = data["worker_id"]
         return json.dumps({'result': f"worker {worker_id} is indexing {corpus.nr_documents_loaded} documents"})
 

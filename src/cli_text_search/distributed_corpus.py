@@ -2,7 +2,7 @@ from sklearn.feature_extraction.text import HashingVectorizer
 import pandas as pd
 import numpy as np
 import logging
-from src.cli_text_search.corpus import Corpus
+from corpus import Corpus
 
 
 class DistributedCorpus(Corpus):
@@ -43,7 +43,6 @@ class DistributedCorpus(Corpus):
                                             n_features=2 ** 18,
                                             alternate_sign=False)
         self.n_gram_matrix = self.vectorizer.fit_transform(texts)  # requires all documents in memory
-
 
         logging.debug(f"document term matrix shape: {self.get_document_term_matrix().shape}")
 
