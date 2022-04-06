@@ -28,7 +28,7 @@ class ProxyCorpus(Corpus):
         get_matching_documents(self, search_term)
     """
 
-    nr_workers = 1
+    nr_workers = 2
 
     @classmethod
     async def create(cls, file_paths, input_type):

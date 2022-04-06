@@ -1,5 +1,6 @@
 import json
 import os
+import sys
 
 from flask import Flask, request
 
@@ -15,11 +16,21 @@ worker_id = -1
 
 @app.route('/init', methods=['POST'])
 def init():
+    """
+    The function is called by the master node to initiate the distributed corpus
+
+    :param
+    :param
+    :return: The worker_id and the number of documents indexed.
+    """
     global initiated
     global worker_id
     content_type = request.headers.get('Content-Type')
     if content_type == 'application/json':
         data = json.loads(request.data)
+        print(f"worker id: {worker_id} of type {type(worker_id)}")
+        print(f"vs post data worker id: {data['worker_id']} of type {type(data['worker_id'])}")
+        assert data["worker_id"] == int(worker_id)
         if not initiated:
             args = request.args
             global corpus
@@ -34,6 +45,12 @@ def init():
 
 @app.route('/search', methods=['GET'])
 def search():
+    """
+    The function takes a query and returns a list of matching documents
+    :params q: search string
+    :params max_results: maximum number of matching documents to return
+    :return: A JSON object containing the matching documents.
+    """
     args = request.args
     if "max_results" in args:
         result = json.dumps(corpus.get_matching_documents(args["q"], args["max_results"]))
@@ -42,4 +59,7 @@ def search():
     return result
 
 
-app.run(port=os.environ.get('PORT'))
+if __name__ == '__main__':
+    worker_id = sys.argv[1]
+    port = os.environ.get(f"WORKER_PORT_{str(worker_id)}")
+    app.run(port=port)

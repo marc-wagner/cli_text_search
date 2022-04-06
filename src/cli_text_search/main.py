@@ -6,14 +6,15 @@ import http
 from prompt_toolkit import PromptSession
 
 from cli_text_search.corpus import Corpus
-from src.cli_text_search.proxy_corpus import ProxyCorpus
+from cli_text_search.proxy_corpus import ProxyCorpus
 
 logformat = "[%(asctime)s] %(levelname)s:%(name)s:%(message)s"
-logging.basicConfig(level="DEBUG",
+logging.basicConfig(level="INFO",
                     stream=sys.stdout,
                     format=logformat,
                     datefmt="%Y-%m-%d %H:%M:%S")
-http.client.HTTPConnection.debuglevel = 1
+http.client.HTTPConnection.debuglevel = 0
+
 
 max_results = 10  # max number of results returned
 
@@ -57,7 +58,10 @@ async def search(answer, corpus):
     nr_tokens = len(search_tokens.get_dictionary())
     logging.debug(f"number of (unique) tokens in search: {nr_tokens}")
     tokens_as_string = ' '.join(search_tokens.get_dictionary().flatten())
-    document_score = await corpus.get_matching_documents(search_term=tokens_as_string)
+    if type(corpus) == ProxyCorpus:
+        document_score = await corpus.get_matching_documents(search_term=tokens_as_string)
+    else:
+        document_score = corpus.get_matching_documents(search_term=tokens_as_string)
     output = ''
     if len(document_score) == 0:
         return "no matches found"
@@ -95,7 +99,7 @@ async def invoke_prompt(folder_path, big=False):
     logging.debug(f"starting interactive user prompt")
     s = PromptSession(message="'search (type 'quit' to exit) > ")
     while loop:
-        answer = s.prompt()
+        answer = await s.prompt_async()
         try:
             if answer == "quit":
                 logging.info(f"user requested to quit program execution")
