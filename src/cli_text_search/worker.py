@@ -3,11 +3,13 @@ import os
 import sys
 
 from flask import Flask, request
+from flasgger import Swagger
 
 from distributed_corpus import DistributedCorpus
 
 app = Flask(__name__)
-app.debug = True
+swagger = Swagger(app)
+#app.debug = True
 
 initiated = False
 corpus = None
@@ -17,11 +19,15 @@ worker_id = -1
 @app.route('/init', methods=['POST'])
 def init():
     """
-    The function is called by the master node to initiate the distributed corpus
-
-    :param
-    :param
-    :return: The worker_id and the number of documents indexed.
+    parameters:
+      - name: filenames
+        type: string
+        required: true
+    responses:
+      200:
+        description: the worker_id and the number of indexed documents
+        examples:
+          data: {'worker_id': 0, "indexed_documents": 1000}
     """
     global initiated
     global worker_id
