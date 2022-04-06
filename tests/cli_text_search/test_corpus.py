@@ -6,7 +6,7 @@ import pandas
 import pytest
 from scipy.sparse import csr_matrix
 
-from cli_text_search.corpus import Corpus
+from src.cli_text_search.corpus import Corpus
 
 
 class TestCorpus:

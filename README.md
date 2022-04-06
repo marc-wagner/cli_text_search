@@ -11,11 +11,40 @@ then type search sentences in interactive command line prompt to view most relev
 > from within a terminal
 
 ```
-python ./src/cli_text_search/main.py [document_directory]
-
+python ./src/cli_text_search/main.py [--big] document_directory
+ 
 search > type sentence
  
 or type 'quit' to exit
+```
+
+## Installation
+
+place only text documents in document_directory 
+(some binary files are not detected and cause the process to crash)
+
+### --big
+If you have a large number of documents that exceeds local memory,
+you can run the query in a distributed environment
+Provided all the workers have access to the document_directory (shared network drive)
+
+you need to provide the following environment variables for each worker:
+```
+WORKER_HOSTNAME_[worker_number]
+WORKER_PORT_[worker_number]
+```
+Currently, the number of workers is hardcoded to 2 in ProxyCorpus class
+```
+class ProxyCorpus(Corpus):
+
+    nr_workers = 2
+
+    @classmethod
+```
+
+and run the following command to start each worker:
+```
+python ./src/cli_text_search/worker.py [worker_number] 
 ```
 
 ## Search Score
@@ -68,11 +97,31 @@ Data view:
 
 The requirement is to load the documents in memory.
 
-If the number of documents and words exceeds the memory capacity, a distributed version
-of the dictionary could be implemented using the feature_extraction.text.HashingVectorizer
-that would introduce a mild risk of collision (false positives). cf<br/>
-
+### --big
+If the number of documents and words exceeds the local memory capacity, 
+you can use the option --big to run a distributed version of the dictionary 
+which using the feature_extraction.text.HashingVectorizer 
+This introduces a mild risk of collision (false positives). cf<br/>
 https://scikit-learn.org/stable/auto_examples/applications/plot_out_of_core_classification.html#sphx-glr-auto-examples-applications-plot-out-of-core-classification-py
+
+## Distributed architecture
+
+The distributed architecture uses 3 components:
+
+### Main
+The entry point for both normal and distributed calculation 
+
+### ProxyCorpus
+Proxy of local Corpus that facades the distributed calculation.
+
+### DistributedCorpus
+Stateless version of Corpus that is run on distributed worker node.
+
+The communication between ProxyCorpus and workers is done via REST API calls:
+
+POST worker/init  with body = json collection of filepaths
+ 
+GET worker/search?q=
 
 ## Note
 
